@@ -1,0 +1,28 @@
+{
+	"name": "backend",
+	"version": "1.0.0",
+	"description": "",
+	"main": "src/server.ts",
+	"scripts": {
+		"start": "nodemon",
+		"test": "vitest",
+		"test:watch": "vitest"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs",
+	"dependencies": {
+		"@hapi/hapi": "^21.4.4",
+		"@hapi/inert": "^7.1.0",
+		"@types/hapi": "^18.0.15",
+		"mysql2": "^3.15.3"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.1",
+		"dotenv": "^17.2.3",
+		"esbuild": "^0.27.1",
+		"esbuild-register": "^3.6.0",
+		"vitest": "^4.0.15"
+	}
+}

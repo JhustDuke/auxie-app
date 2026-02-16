@@ -1,0 +1,28 @@
+{
+	"name": "cbt",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"dev:ext": "web-ext run",
+		"dev:cs": "vite build --watch --config vite.config.cs.ts",
+		"dev:main": "vite build --watch --config vite.config.main.ts"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"bootstrap": "^5.3.8",
+		"jquery": "^3.7.1",
+		"materializecss-colors-alone": "^0.1.0",
+		"xtension-messenger": "^2.1.6",
+		"zustand": "^4.5.7"
+	},
+	"devDependencies": {
+		"@types/firefox-webext-browser": "^143.0.0",
+		"@types/jquery": "^3.5.33",
+		"typescript": "^5.9.3",
+		"vite": "^7.3.0"
+	}
+}
