@@ -12,7 +12,7 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"auxie-shared": "workspace:*",
+		"auxie-shared": "file:../sharedApis",
 		"bootstrap": "^5.3.8",
 		"jquery": "^3.7.1",
 		"materializecss-colors-alone": "^0.1.0",
