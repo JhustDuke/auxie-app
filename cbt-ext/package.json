@@ -1,8 +1,7 @@
 {
-	"name": "cbt",
+	"name": "cbt-ext",
 	"version": "1.0.0",
 	"description": "",
-	"main": "index.js",
 	"type": "module",
 	"scripts": {
 		"dev:ext": "web-ext run",

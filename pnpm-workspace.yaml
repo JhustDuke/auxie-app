@@ -1,0 +1,4 @@
+packages:
+  - "backend/*"
+  - "agentsUI/*"
+  - "cbt-ext/*"
