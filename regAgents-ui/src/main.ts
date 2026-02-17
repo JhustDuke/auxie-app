@@ -1,5 +1,6 @@
 import $ from "jquery";
 import axios, { AxiosError } from "axios";
+import { backendUrls } from "auxie-shared";
 
 /* -------------------- GLOBAL HASH TRACKER -------------------- */
 let storedPassportHash: string = "";
@@ -116,7 +117,7 @@ $("#form").on({
 
 		try {
 			const response = await axios.post(
-				"https://auxie-kwfy.onrender.com/enrolCandidate",
+				`${backendUrls.regAgents}/enrolCandidate`,
 				data
 			);
 
@@ -171,9 +172,9 @@ $("#checkStatusBtn").on({
 
 		try {
 			const response = await axios.get(
-				`https://auxie-kwfy.onrender.com/getCandidateByPhone?phoneNumber=${encodeURIComponent(
-					phone
-				)}`
+				`${
+					backendUrls.regAgents
+				}/getCandidateByPhone?phoneNumber=${encodeURIComponent(phone)}`
 			);
 			console.log(response.data);
 

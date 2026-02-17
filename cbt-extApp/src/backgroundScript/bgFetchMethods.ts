@@ -1,9 +1,10 @@
 import { BackendResponseInterface } from "../interfaces";
 import { mockData } from "./mock";
 import axios, { AxiosResponse } from "axios";
+import { backendUrls } from "auxie-shared";
 
 const url = `https://auxie-kwfy.onrender.com`;
-
+backendUrls.extApp;
 // BG fetch methods
 export const bgFetchMethods = {
 	backHistory: [] as BackendResponseInterface[],
@@ -15,7 +16,7 @@ export const bgFetchMethods = {
 		const getEnrolData = "/getEnrolData";
 		try {
 			const response: AxiosResponse<BackendResponseInterface[]> =
-				await axios.get(url + getEnrolData);
+				await axios.get(backendUrls + getEnrolData);
 
 			const data: BackendResponseInterface[] = response.data;
 			console.log(data);

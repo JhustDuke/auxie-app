@@ -1,5 +1,6 @@
 packages:
-  - "backend/*"
-  - "regAgents-ui/*"
-  - "cbt-extApp/*"
-  - "cbt-ui-mock/*"
+  - "backend"
+  - "regAgents-ui"
+  - "cbt-extApp"
+  - "cbt-ui-mock"
+  - "sharedApis"

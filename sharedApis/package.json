@@ -1,0 +1,7 @@
+{
+	"name": "auxie-shared",
+	"version": "1.0.0",
+	"description": "shared url and configs used by cbt-extApp,cbt-agents-cbt-ui",
+	"main": "index.ts",
+	"packageManager": "pnpm@10.29.3"
+}
