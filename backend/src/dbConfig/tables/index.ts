@@ -1,2 +1,2 @@
-export * from "./enrolStatusTable";
-export * from "./enrolTable";
+export * from "./checkEnrolStatusTable";
+export * from "./enrolCandidateTable";

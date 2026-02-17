@@ -1,12 +1,23 @@
 import { ServerRoute } from "@hapi/hapi";
+
 import { enrolRoute } from "./post";
-import { getEnrolStatusRoute } from "./get";
+import {
+	baseRoute,
+	getEnrolDataRoute,
+	getEnrolStatusRoute,
+	getCandidateByPhoneRoute,
+} from "./get";
 import { updateEnrolStatusRoute } from "./patch";
-import { healthRoute } from "./heatlhRoute";
+import { notFoundRoute } from "./404";
+import { deleteEnrolTable } from "./delete/deleteTable";
 
 export const allRoutes: ServerRoute[] = [
+	baseRoute,
 	enrolRoute,
+	getEnrolDataRoute,
 	getEnrolStatusRoute,
+	getCandidateByPhoneRoute,
 	updateEnrolStatusRoute,
-	healthRoute,
+	deleteEnrolTable,
+	notFoundRoute,
 ];

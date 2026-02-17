@@ -1,1 +1,1 @@
-export * from "./enrolRoute";
+export * from "./addCandidate";
