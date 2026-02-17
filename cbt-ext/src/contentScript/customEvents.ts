@@ -1,5 +1,5 @@
 export const CustomEvents = {
-	imagePrepared: "image_prepared",
+	phoneNumberIsReady: "phone_number",
 	initDownload: "download_requested",
 	fileSelected: "file_selected",
 	onRecievePrevEnrolData: " receive_prev_enrol",

@@ -1,5 +1,8 @@
 import { BackendResponseInterface } from "../interfaces";
 import { mockData } from "./mock";
+import axios, { AxiosResponse } from "axios";
+
+const url = `https://auxie-kwfy.onrender.com`;
 
 // BG fetch methods
 export const bgFetchMethods = {
@@ -8,12 +11,19 @@ export const bgFetchMethods = {
 	dataGenerator: null as Generator<BackendResponseInterface> | null,
 
 	// fetch backend data
-	fetchBackendData: function (): Promise<BackendResponseInterface[]> {
-		return new Promise(function (resolve) {
-			setTimeout(function () {
-				resolve(mockData);
-			}, 1000);
-		});
+	fetchBackendData: async function (): Promise<BackendResponseInterface[]> {
+		const getEnrolData = "/getEnrolData";
+		try {
+			const response: AxiosResponse<BackendResponseInterface[]> =
+				await axios.get(url + getEnrolData);
+
+			const data: BackendResponseInterface[] = response.data;
+			console.log(data);
+
+			return data;
+		} catch (err: any) {
+			throw new Error(err.response.data?.message || "couldn't fetch resource");
+		}
 	},
 
 	// generator helper

@@ -1,3 +1,7 @@
+// ======================================================
+// IMPORTS
+// External libs, types, utilities, and internal modules
+// ======================================================
 import { oneTimeMsgFactory } from "xtension-messenger";
 import { ExtensionMessageInterface } from "xtension-messenger/dist/types/interfaces";
 import {
@@ -6,7 +10,6 @@ import {
 	CsState,
 } from "../interfaces";
 import { actionButtonMethods } from "./actionBtnAndModal/actionBtn";
-
 import { csDom } from "./csDOM";
 import { formMethods } from "./formInsertMethods";
 import { setState as stateManager } from "./setState";
@@ -17,13 +20,22 @@ import {
 	emitCustomEvent,
 } from "../utils";
 import { CustomEvents } from "./customEvents";
+import { actionModalStore } from "./actionBtnAndModal/actionModalStore";
 
+// ======================================================
+// CONTENT SCRIPT APP
+// Central controller for state, messaging, DOM & cleanup
+// ======================================================
 const csApp = {
+	// ==================================================
+	// STATE
+	// Holds runtime data and UI flags
+	// ==================================================
 	state: {
 		latestFormData: null as FormDataInterface | null,
 		phone: null as string | null,
 		fileName: null as string | null,
-		shouldCheckImageMatch: false,
+
 		ui: {
 			customMessage: "default message",
 			shouldShowError: false,
@@ -32,11 +44,17 @@ const csApp = {
 		},
 	} as Partial<CsState>,
 
+	// ==================================================
+	// STATE ACTIONS
+	// Mutates state through controlled methods
+	// ==================================================
 	stateAction: {
+		// Update only UI portion of state
 		updateUI(ui: Partial<CsState["ui"]>): void {
 			csApp.setState({ ui });
 		},
 
+		// Triggered when new enrol data is loaded
 		onDataLoaded(
 			data: FormDataInterface,
 			uiOverride?: Partial<CsState["ui"]>
@@ -51,34 +69,36 @@ const csApp = {
 					...uiOverride,
 				},
 			});
+
+			// Sync phone to modal store if present
+			if (data.phone) {
+				actionModalStore.setPhoneNumber(data.phone, "onDataLoaded");
+			}
 		},
 
+		// Handles generator iterator result from background
 		handleGeneratorResult(
 			result: GeneratorResultInterface<FormDataInterface>,
 			eventName?: string
 		): void {
 			if (!result || result.done === true) {
-				// csApp.stateAction.updateUI({
-				// 	shouldShowError: true,
-				// 	customMessage: "No data available",
-				// });
-
 				throw new Error("no data available");
 			}
 
 			csApp.stateAction.onDataLoaded(result.value);
 
+			// Optionally emit event for UI navigation
 			if (eventName) {
-				emitCustomEvent({
-					eventName,
-					payload: result,
-				});
+				emitCustomEvent({ eventName, payload: result });
 			}
 		},
 
+		// ==================================================
+		// FORM INTERACTION
+		// Routes input/select handling to formMethods
+		// ==================================================
 		onFormInteraction(e: Event): void {
 			const data = csApp.state.latestFormData;
-
 			if (!data) {
 				csApp.stateAction.updateUI({
 					customMessage: "Start data fetching sequence",
@@ -87,45 +107,43 @@ const csApp = {
 				return;
 			}
 
-			formMethods.handleEvent(e, data);
-		},
-		checkImageImageMatch() {
-			csApp.setState({ shouldCheckImageMatch: false });
-			const phone = csApp.state.phone?.toLowerCase().trim();
-			const fileName = csApp.state.fileName?.toLowerCase().trim();
+			const target = e.target as HTMLElement;
+			if (!target) return;
 
-			if (!phone || !fileName) {
-				console.error("phone and filename missing");
+			if (target.tagName === "INPUT") {
+				const input = target as HTMLInputElement;
+				input.type === "file"
+					? formMethods.handleFileInput(input)
+					: formMethods.handleTextInput(input, data);
 				return;
 			}
 
-			if (phone !== fileName) {
-				csApp.setState({
-					ui: {
-						customMessage: "file name and image is not a match",
-						shouldShowError: true,
-					},
-				});
+			if (target.tagName === "SELECT") {
+				formMethods.handleSelect(target as HTMLSelectElement, data.course);
 			}
 		},
 	},
 
+	// ==================================================
+	// MESSAGING
+	// Background communication + emitted DOM events
+	// ==================================================
 	messaging: {
+		// Background channel
 		cs: oneTimeMsgFactory("cs"),
 
+		// ------------------------------
+		// Background Handlers
+		// ------------------------------
 		handleMessage(message: ExtensionMessageInterface): void {
 			const result =
 				message.payload as GeneratorResultInterface<FormDataInterface>;
-
 			csApp.stateAction.handleGeneratorResult(result);
 		},
 
 		downloadImage(payload: { imageFile: string; phone: string }): void {
 			csApp.messaging.cs.messageBackgroundScript({
-				message: {
-					type: messageType.startDownload,
-					payload,
-				},
+				message: { type: messageType.startDownload, payload },
 				errorCb(error) {
 					csApp.stateAction.updateUI({
 						shouldShowError: true,
@@ -150,15 +168,11 @@ const csApp = {
 						shouldShowError: true,
 						isDataAvailable: false,
 					});
-
-					emitCustomEvent({
-						eventName: CustomEvents.disableNextBtn,
-					});
+					emitCustomEvent({ eventName: CustomEvents.disableNextBtn });
 				},
 				successCb(response) {
 					const result =
 						response.data as GeneratorResultInterface<FormDataInterface>;
-
 					csApp.stateAction.handleGeneratorResult(
 						result,
 						CustomEvents.onRecieveNextEnrolData
@@ -176,7 +190,6 @@ const csApp = {
 						shouldShowError: true,
 						isDataAvailable: false,
 					});
-
 					emitCustomEvent({ eventName: CustomEvents.disablePrevBtn });
 				},
 				successCb(response) {
@@ -189,45 +202,46 @@ const csApp = {
 				},
 			});
 		},
-		receivePhone(phone: string) {
-			if (!phone) {
-				csApp.setState({
-					ui: {
-						customMessage: "phone number not received",
-						shouldShowError: true,
-					},
-				});
-				return;
-			}
 
-			csApp.setState({ phone, shouldCheckImageMatch: !!csApp.state.fileName });
-		},
-
-		receiveImageFileName(imageFileName: string) {
-			if (!imageFileName) {
-				csApp.setState({
-					ui: {
-						customMessage: "imageFileName not received",
-						shouldShowError: true,
-					},
-				});
-				return;
-			}
-			if (csApp.state.phone) {
-				csApp.setState({
-					fileName: imageFileName,
-					shouldCheckImageMatch: !!csApp.state.phone,
-				});
-			}
-		},
-
+		// Register background sync listener
 		init(): void {
 			csApp.messaging.cs.onMessageSync({
 				onSyncCb: csApp.messaging.handleMessage,
 			});
 		},
+
+		// ------------------------------
+		// Emitted Custom Events
+		// Pure DOM-based state updates
+		// ------------------------------
+		emittedMessage: {
+			receivePhone(phone: string) {
+				if (!phone) return;
+
+				csApp.setState({
+					phone,
+					ui: { customMessage: "received phone number" },
+				});
+			},
+
+			receiveImageFileName(imageFileName: string) {
+				if (!imageFileName) return;
+
+				csApp.setState({
+					fileName: imageFileName,
+					ui: {
+						customMessage: "received image file",
+						shouldShowError: false,
+					},
+				});
+			},
+		},
 	},
 
+	// ==================================================
+	// RENDER
+	// UI reactions based on state
+	// ==================================================
 	render(): void {
 		const ui = csApp.state.ui || {};
 		const appState = csApp.state;
@@ -238,67 +252,101 @@ const csApp = {
 		});
 
 		if (ui.shouldShowActionBtn) actionButtonMethods.initBtn();
-		if (appState.shouldCheckImageMatch) {
-			csApp.stateAction.checkImageImageMatch();
+
+		// Validate file name vs phone match
+		if (appState.fileName && appState.phone) {
+			if (appState.fileName !== appState.phone) {
+				notifyToast({
+					type: "error",
+					text: "filename and phone is not a match",
+				});
+			}
 		}
 	},
 
+	// ==================================================
+	// STATE SETTER
+	// Centralized state mutation
+	// ==================================================
 	setState(updatedState: Partial<CsState>): void {
 		stateManager(csApp.state, updatedState, csApp.render);
 	},
 
+	// ==================================================
+	// DOM EVENTS
+	// Binds form + custom event listeners
+	// ==================================================
 	initDOMEvents(): void {
-		csDom.form?.addEventListener("dblclick", function (e) {
-			csApp.stateAction.onFormInteraction(e);
-		});
+		csDom.form?.addEventListener("dblclick", (e) =>
+			csApp.stateAction.onFormInteraction(e)
+		);
 
-		document.addEventListener(CustomEvents.initDownload, function (e: Event) {
+		csDom.form?.addEventListener("change", (e) =>
+			csApp.stateAction.onFormInteraction(e)
+		);
+
+		document.addEventListener(CustomEvents.initDownload, (e: Event) => {
 			const ev = e as CustomEvent<{ imageFile: string; phone: string }>;
 			if (ev.detail) csApp.messaging.downloadImage(ev.detail);
 		});
 
-		document.addEventListener(CustomEvents.getNext, function () {
-			csApp.messaging.getNextData();
-		});
-
-		document.addEventListener(CustomEvents.getPrev, function () {
-			csApp.messaging.getPrevData();
-		});
-
-		document.addEventListener(
-			CustomEvents.onPhoneNumberEmit,
-			function (e: Event) {
-				const ev = e as CustomEvent<{ phone: string }>;
-				if (ev.detail) csApp.messaging.receivePhone(ev.detail.phone);
-			}
+		document.addEventListener(CustomEvents.getNext, () =>
+			csApp.messaging.getNextData()
+		);
+		document.addEventListener(CustomEvents.getPrev, () =>
+			csApp.messaging.getPrevData()
 		);
 
-		document.addEventListener(
-			CustomEvents.onImageFileNameEmit,
-			function (e: Event) {
-				const ev = e as CustomEvent<{ imageFileName: string }>;
-				if (ev.detail)
-					csApp.messaging.receiveImageFileName(ev.detail.imageFileName);
-			}
-		);
+		document.addEventListener(CustomEvents.onPhoneNumberEmit, (e: Event) => {
+			const ev = e as CustomEvent<{ phone: string }>;
+			if (ev.detail)
+				csApp.messaging.emittedMessage.receivePhone(ev.detail.phone);
+		});
+
+		document.addEventListener(CustomEvents.onImageFileNameEmit, (e: Event) => {
+			const ev = e as CustomEvent<{ imageFileName: string }>;
+			if (ev.detail)
+				csApp.messaging.emittedMessage.receiveImageFileName(
+					ev.detail.imageFileName
+				);
+		});
 	},
 
+	// ==================================================
+	// CLEANUP
+	// Resets UI, form, extension elements, and images
+	// ==================================================
 	cleanup(): void {
 		const elems = [csDom.actionBtn, csDom.nextBtn, csDom.actionModal];
-		elems.forEach(function (elem) {
-			document.getElementById(elem?.id as string)?.remove();
-		});
+		elems.forEach((elem) =>
+			document.getElementById(elem?.id as string)?.remove()
+		);
 
 		cleanupAll(".ext");
+
 		cleanupAll(".ext-pill", function (pill) {
 			const input = pill.previousElementSibling as
 				| HTMLInputElement
 				| HTMLSelectElement;
 			if (input) input.value = "";
 		});
+
+		if (csDom.form) csDom.form.reset();
+
+		// Clear passport image preview
+		document.querySelectorAll("img").forEach((img) => {
+			if ((img.alt || "").toLowerCase().includes("passport")) {
+				img.src = "";
+				img.removeAttribute("srcset");
+			}
+		});
 	},
 
-	init(): void {
+	// ==================================================
+	// INIT
+	// Entry point
+	// ==================================================
+	init() {
 		csApp.cleanup();
 		csApp.messaging.init();
 		csApp.initDOMEvents();
@@ -306,21 +354,3 @@ const csApp = {
 };
 
 csApp.init();
-
-/**
- * get phone
- * get image file name,
- * verify that phone has the same extension as image
- * ask bg script if the hash is correct
- */
-
-/**
- * whats the problem
- * i cant call them separately i need to call them together
- * after verifying for one what do i do ?
- * call a message sender to bg?
- * call a utility that does the checking ??
- * send the emits and add a new state e.g shouldCheckImageMatch that runs when the image and image file is present in the render
- * what do i want?
- * i need to get the phonenumber and image
- */

@@ -1,10 +1,7 @@
 import { addElemToDom, updateNavButtons } from "../../utils";
 import { csDom } from "../csDOM";
-import { CustomEvents } from "../customEvents";
-import { modalState } from "./modalState";
-import { wireModalEvents } from "./modalEvents";
+import { wireModalEvents } from "./actionModalEvents";
 import { updateModalDom } from "./updateModalDOM";
-import { FormDataInterface } from "../../interfaces";
 
 const MODAL_ID = csDom.actionModal?.id as string;
 
@@ -21,6 +18,7 @@ export function showModal(): void {
 	}
 
 	createModal();
+	updateModalDom(MODAL_ID);
 }
 
 function createModal(): void {
@@ -39,95 +37,6 @@ function createModal(): void {
 		},
 	});
 }
-
-/* =========================
-   State updater (single source)
-========================= */
-function applyEnrolData(data: FormDataInterface): void {
-	modalState.imageFile = data.imageFile;
-	modalState.phone = data.phone as string;
-	modalState.isImageAvailable = true;
-
-	updateModalDom(MODAL_ID);
-}
-
-/* =========================
-   Payload handler
-========================= */
-function handleEnrolPayload(payload: IteratorResult<FormDataInterface>): void {
-	if (!payload || payload.done) {
-		console.log("[handleEnrolPayload] no data available");
-		return;
-	}
-
-	applyEnrolData(payload.value);
-}
-
-/* =========================
-   Image prepared
-========================= */
-document.addEventListener(CustomEvents.imagePrepared, function (e: Event) {
-	const payload = (e as CustomEvent<FormDataInterface>).detail;
-
-	if (!payload?.imageFile || !payload.phone) {
-		console.log("[imagePrepared] missing required fields");
-		return;
-	}
-
-	applyEnrolData(payload);
-});
-
-/* =========================
-   Next enrol data
-========================= */
-document.addEventListener(
-	CustomEvents.onRecieveNextEnrolData,
-	function (e: Event) {
-		const payload = (e as CustomEvent<IteratorResult<FormDataInterface>>)
-			.detail;
-
-		modalState.canGoBack = true;
-		updateNavButtons(!payload.done, true);
-
-		if (payload.done) {
-			console.log("[onRecieveNextEnrol] no more data");
-			return;
-		}
-
-		handleEnrolPayload(payload);
-	}
-);
-
-/* =========================
-   Prev enrol data
-========================= */
-document.addEventListener(
-	CustomEvents.onRecievePrevEnrolData,
-	function (e: Event) {
-		const payload = (e as CustomEvent<IteratorResult<FormDataInterface>>)
-			.detail;
-
-		updateNavButtons(true, !payload.done);
-
-		if (payload.done) {
-			console.log("[onRecievePrevEnrol] no more previous data");
-			return;
-		}
-
-		handleEnrolPayload(payload);
-	}
-);
-
-/* =========================
-   External nav controls
-========================= */
-document.addEventListener(CustomEvents.disableNextBtn, function () {
-	updateNavButtons(false, modalState.canGoBack);
-});
-
-document.addEventListener(CustomEvents.disablePrevBtn, function () {
-	updateNavButtons(true, false);
-});
 
 /* =========================
    Modal template

@@ -20,13 +20,9 @@ export const formMethods = (function () {
 			parentElem: elem.parentElement || document.body,
 			typeOfElem: "button",
 			textContent: pillText,
-			elemAttributes: {
-				class: "ext-pill red lighten-3",
-				type: "button",
-			},
+			elemAttributes: { class: "ext-pill red lighten-3", type: "button" },
 			pluginFunc: function (parent, pill) {
 				parent.insertBefore(pill, elem.nextSibling);
-
 				pill.addEventListener("dblclick", function () {
 					elem.value = "";
 					pill.remove();
@@ -39,23 +35,14 @@ export const formMethods = (function () {
 	// PUBLIC API
 	// ===============================
 	return {
-		handleInput: function (
+		// Handle name, email, phone
+		handleTextInput: function (
 			input: HTMLInputElement,
 			formData: FormDataInterface
 		): void {
 			if (!formData) return;
 
 			const placeholder = input.placeholder?.toLowerCase() || "";
-
-			if (input.type === "file") {
-				const imageFileName = extractFilename(input);
-				emitCustomEvent({
-					eventName: customEventsNames.onImageFileNameEmit,
-					payload: {
-						imageFileName,
-					},
-				});
-			}
 
 			if (placeholder.includes("full name") && formData.fullName) {
 				createPill(input, formData.fullName, "Full Name");
@@ -68,16 +55,25 @@ export const formMethods = (function () {
 			}
 
 			if (placeholder.includes("phone") && formData.phone) {
+				createPill(input, formData.phone, "Phone");
 				emitCustomEvent({
 					eventName: customEventsNames.onPhoneNumberEmit,
-					payload: {
-						phone: formData.phone,
-					},
+					payload: { phone: formData.phone },
 				});
-				createPill(input, formData.phone, "Phone");
 			}
 		},
 
+		// Handle file inputs (image files)
+		handleFileInput: function (input: HTMLInputElement): void {
+			const imageFileName = extractFilename(input);
+			emitCustomEvent({
+				eventName: customEventsNames.onImageFileNameEmit,
+				payload: { imageFileName },
+			});
+			console.log("image emitted");
+		},
+
+		// Handle select elements
 		handleSelect: function (select: HTMLSelectElement, course?: string): void {
 			const courses = Array.from(select.options);
 			const payloadCourse = courses.find(function (entry) {
@@ -91,17 +87,17 @@ export const formMethods = (function () {
 			createPill(select, payloadCourse.value, "Course");
 		},
 
+		// Delegate input/select events
 		handleEvent: function (e: Event, formData: FormDataInterface): void {
 			const target = e.target as HTMLElement;
 			if (!target) return;
 
-			emitImageToActionModal(formData);
-
 			if (target.tagName === "INPUT") {
 				const input = target as HTMLInputElement;
-
-				if (input.placeholder) {
-					this.handleInput(input, formData);
+				if (input.type === "file") {
+					this.handleFileInput(input);
+				} else {
+					this.handleTextInput(input, formData);
 				}
 				return;
 			}
@@ -113,37 +109,12 @@ export const formMethods = (function () {
 	};
 })();
 
-// ===============================
-// IMAGE EMITTER (SINGLE SOURCE)
-// ===============================
-let imageEmitted = false;
-
-const emitImageToActionModal = function (formData: FormDataInterface): void {
-	if (imageEmitted) {
-		return;
-	}
-	if (!formData?.imageFile) {
-		console.log("phone not available");
-		return;
-	}
-	if (!formData?.phone) {
-		console.log("phone not available");
-		return;
-	}
-
-	emitCustomEvent({
-		eventName: customEventsNames.imagePrepared,
-		payload: formData,
-	});
-	imageEmitted = true;
-};
-
+// Extract filename from file input
 function extractFilename(input: HTMLInputElement): string | null {
 	if (!input.files || input.files.length === 0) {
 		console.log("No file selected");
 		return null;
 	}
-
 	const file = input.files[0];
 	const nameParts = file.name.split(".");
 	if (nameParts.length === 1) return file.name; // no extension

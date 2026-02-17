@@ -30,7 +30,9 @@ export interface BackendResponseInterface {
 	email: string;
 	phone: string;
 	course: string;
-	imageFile: any;
+	imageFile: Blob;
+	imageFileHash: string;
+	imageFileExtType: string;
 }
 
 export interface GeneratorResultInterface<T> {

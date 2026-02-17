@@ -1,6 +1,6 @@
 import { emitCustomEvent } from "../../utils";
 import { CustomEvents } from "../customEvents";
-import { modalState } from "./modalState";
+import { actionModalStore } from "./actionModalStore";
 import { modal_ids } from "./modal_ids";
 
 export function wireModalEvents(
@@ -33,11 +33,9 @@ export function wireModalEvents(
 	// Submit & Close
 	submitBtn.addEventListener("click", function () {
 		modal.style.display = "none";
-		if (updateCallback) updateCallback();
 	});
 	closeBtn.addEventListener("click", function () {
 		modal.style.display = "none";
-		if (updateCallback) updateCallback();
 	});
 
 	// Status select
@@ -46,7 +44,6 @@ export function wireModalEvents(
 		errorReasonInput.classList.toggle("d-none", !isError);
 		errorText.classList.toggle("d-none", !isError);
 		submitBtn.disabled = isError;
-		if (updateCallback) updateCallback();
 	});
 
 	// Error reason input
@@ -54,24 +51,27 @@ export function wireModalEvents(
 		const isValid = errorReasonInput.value.trim().length >= 5;
 		submitBtn.disabled = !isValid;
 		errorText.classList.toggle("d-none", isValid);
-		if (updateCallback) updateCallback();
 	});
 
-	// Download button
+	//Download button
 	downloadBtn.addEventListener("click", function () {
 		if (
-			!modalState.isImageAvailable ||
-			!modalState.imageFile ||
-			!modalState.phone
+			!actionModalStore.getImageFile() ||
+			!actionModalStore.getPhoneNumber()
 		) {
-			console.log("[downloadBtn] blocked: state incomplete");
+			console.error("[downloadBtn] blocked: state incomplete");
 			return;
 		}
 		emitCustomEvent({
 			eventName: CustomEvents.initDownload,
-			payload: { imageFile: modalState.imageFile, phone: modalState.phone },
+			payload: {
+				imageFile: actionModalStore.getImageFile(),
+				phone: actionModalStore.getPhoneNumber(),
+			},
 		});
 		console.log("[downloadBtn] download event emitted");
+
+		//updateCallBack here and in other places simply forces the updateModalDom to rerender
 		if (updateCallback) updateCallback();
 	});
 
@@ -80,24 +80,29 @@ export function wireModalEvents(
 		emitCustomEvent({ eventName: CustomEvents.getPrev });
 		console.log("[prevBtn] prev event emitted");
 		handlePrevCounter();
-		if (updateCallback) updateCallback();
+		updateCallback?.();
 	});
 	nextBtn.addEventListener("click", function () {
 		emitCustomEvent({ eventName: CustomEvents.getNext });
 		console.log("[nextBtn] next event emitted");
 		handleNextCounter();
-		if (updateCallback) updateCallback();
+		updateCallback?.();
 	});
 }
 
 function handleNextCounter() {
-	modalState.stepsBackward++;
-	if (modalState.stepsForward > 0) {
-		modalState.stepsForward--;
+	actionModalStore.incrementStepsBackward("handleNextCounter");
+	console.log("stepsFF", actionModalStore.getStepsForward());
+
+	if (actionModalStore.getStepsForward() > 0) {
+		actionModalStore.reduceStepsForward("handleNext");
 	}
 }
 
 function handlePrevCounter() {
-	modalState.stepsForward++;
-	if (modalState.stepsBackward > 0) modalState.stepsBackward--;
+	actionModalStore.incrementStepsForward("handlePrevCounter");
+	console.log("stepsBB", actionModalStore.getStepsBackward());
+
+	if (actionModalStore.getStepsBackward() > 0)
+		actionModalStore.reduceStepsBackward("handlePrev");
 }
