@@ -1,4 +1,5 @@
 packages:
   - "backend/*"
-  - "agents-ui/*"
-  - "cbt-ext/*"
+  - "regAgents-ui/*"
+  - "cbt-extApp/*"
+  - "cbt-ui-mock/*"

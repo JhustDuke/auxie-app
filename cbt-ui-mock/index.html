@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link
+			rel="icon"
+			type="image/svg+xml"
+			href="#" />
+		<link
+			rel="stylesheet"
+			href="./src/style.css" />
+
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0" />
+		<title>cbt center simulation</title>
+
+		<!-- bootstrap -->
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+			rel="stylesheet" />
+	</head>
+
+	<body>
+		<div
+			id="app"
+			class="grey lighten-4 mt-1">
+			<!-- navbar -->
+			<div class="black darken-3 p-3 container">
+				<center>
+					<h1 class="yellow fs-1">CBT JAMB MOCK</h1>
+				</center>
+			</div>
+
+			<!-- enrolment form container -->
+			<div class="container grey lighten-3 p-3">
+				<div class="col-md-12 mb-4">
+					<div class="row">
+						<center>
+							<div><h3 class="text-uppercase fw-bold">Enrolment form</h3></div>
+						</center>
+					</div>
+				</div>
+
+				<div class="row justify-content-center isRelative">
+					<div class="col-md-8">
+						<form id="form">
+							<div class="mb-3 text-center">
+								<!-- passport -->
+								<div
+									style="width: 200px; height: 200px; border: 6px solid black"
+									class="mx-auto mb-2">
+									<img
+										id="img"
+										alt="upload a passport"
+										class="w-100 h-100" />
+								</div>
+								<label
+									for="passpoert"
+									class="form-label mb-1"
+									>upload a passoport</label
+								>
+								<input
+									type="file"
+									class="form-control"
+									id="passport"
+									placeholder="upload passport"
+									required />
+							</div>
+
+							<div class="mb-3">
+								<label
+									for="fullName"
+									class="form-label"
+									>Full Name</label
+								>
+								<input
+									type="text"
+									class="form-control"
+									id="fullName"
+									placeholder="Enter full name"
+									required />
+							</div>
+
+							<div class="mb-3">
+								<label
+									for="email"
+									class="form-label"
+									>Email</label
+								>
+								<input
+									type="email"
+									class="form-control"
+									id="email"
+									placeholder="Enter email"
+									required />
+							</div>
+
+							<div class="mb-3">
+								<label
+									for="phone"
+									class="form-label"
+									>Phone Number</label
+								>
+								<input
+									type="tel"
+									class="form-control"
+									id="phone"
+									placeholder="Enter phone number"
+									required />
+							</div>
+
+							<div class="mb-3">
+								<label
+									for="course"
+									class="form-label"
+									>Course</label
+								>
+								<select
+									class="form-select"
+									id="course"
+									required>
+									<option
+										selected
+										disabled
+										>Select course</option
+									>
+									<option>medicine</option>
+									<option>Engineering</option>
+									<option>fine art</option>
+									<option>Law</option>
+								</select>
+							</div>
+
+							<div class="d-grid">
+								<button
+									type="submit"
+									class="btn btn-primary">
+									Submit
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script
+			type="module"
+			src="/src/main.ts"></script>
+
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	</body>
+</html>
