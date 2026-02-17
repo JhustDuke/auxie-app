@@ -1,21 +1,20 @@
 {
-	"name": "agents-ui",
-	"private": true,
-	"version": "0.0.0",
-	"type": "module",
+	"name": "auxie",
+	"version": "1.0.0",
+	"description": "Auxie – Remote JAMB Registration MVP Auxie lets students register for JAMB remotely using browser extensions, sending data in secure batches to authorized CBT PCs for verification and submission. Lightweight, MVP-ready, and easily extendable with jQuery + TypeScript + Hapijs ",
+	"main": "index.js",
 	"scripts": {
-		"dev": "vite",
-		"build": "tsc && vite build",
-		"preview": "vite preview"
+		"test": "echo \"Error: no test specified\" && exit 1"
 	},
-	"dependencies": {
-		"bootstrap": "5.0",
-		"jquery": "^3.7.1",
-		"materializecss-colors-alone": "^0.1.0"
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/JhustDuke/Auxie"
 	},
-	"devDependencies": {
-		"@types/jquery": "^3.5.33",
-		"typescript": "~5.9.3",
-		"vite": "^7.2.4"
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs",
+	"bugs": {
+		"url": "https://github.com/JhustDuke/jambClient/issues"
 	}
 }

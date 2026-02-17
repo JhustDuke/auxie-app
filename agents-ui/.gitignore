@@ -1,3 +1,7 @@
+../backend
+../cbt-ext
+../cbt
+
 # Logs
 logs
 *.log

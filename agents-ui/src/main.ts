@@ -1,16 +1,72 @@
 import $ from "jquery";
+import axios, { AxiosError } from "axios";
 
 /* -------------------- GLOBAL HASH TRACKER -------------------- */
 let storedPassportHash: string = "";
 
-/* -------------------- PASSPORT PREVIEW + HASH + MATCH CHECK -------------------- */
+/* -------------------- LOCAL STORAGE HELPERS -------------------- */
+const PHONE_STORAGE_KEY = "enrolledPhones";
+
+function getStoredPhones(): string[] {
+	const raw = localStorage.getItem(PHONE_STORAGE_KEY);
+	return raw ? JSON.parse(raw) : [];
+}
+
+function storePhone(phone: string): void {
+	const phones = getStoredPhones();
+	if (!phones.includes(phone)) {
+		phones.push(phone);
+		localStorage.setItem(PHONE_STORAGE_KEY, JSON.stringify(phones));
+	}
+}
+
+function clearStoredPhones(): void {
+	localStorage.removeItem(PHONE_STORAGE_KEY);
+}
+
+/* -------------------- RENDER STORED PHONES IN MODAL -------------------- */
+function renderStoredPhones(): void {
+	const container = $("#storedPhones");
+	container.empty();
+
+	const phones = getStoredPhones();
+
+	container.append(
+		$("<div>").addClass("text-dark fw-bold mb-2").text("Recent registrations")
+	);
+
+	phones.forEach(function (phone) {
+		const btn = $("<button>")
+			.text(phone)
+			.addClass("btn btn-sm btn-outline-dark w-100 mb-2")
+			.on("dblclick", function () {
+				$("#candidatePhone").val(phone);
+			});
+
+		container.append(btn);
+	});
+
+	if (phones.length > 0) {
+		const clearBtn = $("<button>")
+			.text("Clear Recent")
+			.addClass("btn btn-sm red lighten-1 white-text w-100 mt-2")
+			.on("click", function () {
+				clearStoredPhones();
+				container.empty();
+				container.text("recent registration");
+			});
+
+		container.append(clearBtn);
+	}
+}
+
+/* -------------------- PASSPORT PREVIEW + HASH -------------------- */
 $("#passport").on({
 	change: async function (e: Event) {
 		const input = e.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
 
-		/* ---- HASH FILE ---- */
 		const arrayBuffer = await file.arrayBuffer();
 		const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
 		const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -20,19 +76,8 @@ $("#passport").on({
 			})
 			.join("");
 
-		/* ---- MATCH CHECK ---- */
-		if (storedPassportHash === "") {
-			storedPassportHash = newHash;
-			console.log("first hash stored:", storedPassportHash);
-		} else {
-			if (storedPassportHash === newHash) {
-				console.log("it's a match");
-			} else {
-				console.log("not a match");
-			}
-		}
+		storedPassportHash = storedPassportHash || newHash;
 
-		/* ---- PREVIEW ---- */
 		const reader = new FileReader();
 		reader.onload = function () {
 			$("#img").attr("src", reader.result as string);
@@ -41,48 +86,54 @@ $("#passport").on({
 	},
 });
 
-/* -------------------- FORM SUBMIT + AJAX -------------------- */
+/* -------------------- FORM SUBMIT + AXIOS -------------------- */
 $("#form").on({
 	submit: async function (e: Event) {
 		e.preventDefault();
 
 		const submitBtn = $("button[type='submit']");
-		submitBtn.prop("disabled", true);
-		submitBtn.html(`
-            <span class="spinner-border spinner-border-sm" role="status"></span>
-            Processing...
-        `);
+		submitBtn.prop("disabled", true).html(`
+			<span class="spinner-border spinner-border-sm"></span>
+			Processing...
+		`);
 
-		const data = new FormData();
-		data.append("fullName", ($("#fullName").val() as string).trim());
-		data.append("email", $("#email").val() as string);
-		data.append("phone", ($("#phone").val() as string).trim());
-		data.append("course", $("#course").val() as string);
+		const fullName = ($("#fullName").val() as string).trim();
+		const phoneNumber = ($("#phone").val() as string).trim();
+		const course = ($("#course").val() as string).trim();
 
 		const passportInput = $("#passport")[0] as HTMLInputElement;
 		const passportFile = passportInput.files?.[0];
 
-		if (passportFile) {
-			// append file & stored hash (computed on change)
-			data.append("passport", passportFile);
-			data.append("passportHash", storedPassportHash);
+		const data = new FormData();
+		data.append("fullName", fullName);
+		data.append("phoneNumber", phoneNumber);
+		data.append("course", course);
+
+		if (passportFile && storedPassportHash) {
+			data.append("imageFile", passportFile);
+			data.append("imageFileHash", storedPassportHash);
 		}
 
 		try {
-			const response = await $.ajax({
-				url: "/enrol",
-				method: "POST",
-				data,
-				processData: false,
-				contentType: false,
-			});
+			const response = await axios.post(
+				"https://auxie-kwfy.onrender.com/enrolCandidate",
+				data
+			);
 
-			console.log("server response:", response);
+			storePhone(phoneNumber);
+			renderStoredPhones();
+
+			alert(JSON.stringify(response.data.newCandidate, null, 2));
+
+			($("#form")[0] as HTMLFormElement).reset();
+			$("#img").attr("src", "");
+			storedPassportHash = "";
 		} catch (err) {
-			console.error("AJAX error:", err);
+			const axiosError = err as AxiosError<{ message?: string }>;
+			alert(axiosError.response?.data?.message || "Unknown error");
+		} finally {
+			submitBtn.prop("disabled", false).html("Submit");
 		}
-
-		submitBtn.prop("disabled", false).html("Submit");
 	},
 });
 
@@ -92,6 +143,10 @@ $("#toggleModalBtn").on({
 		const modal = $("#statusModal");
 		const isHidden = modal.css("display") === "none";
 		modal.css("display", isHidden ? "block" : "none");
+
+		if (isHidden) {
+			renderStoredPhones();
+		}
 	},
 });
 
@@ -101,7 +156,7 @@ $("#closeModalBtn").on({
 	},
 });
 
-/* -------------------- CHECK STATUS BUTTON + INPUT (AJAX) -------------------- */
+/* -------------------- CHECK STATUS BUTTON (AXIOS + QUERY STRING) -------------------- */
 $("#checkStatusBtn").on({
 	click: async function () {
 		const phone = ($("#candidatePhone").val() as string).trim();
@@ -115,19 +170,25 @@ $("#checkStatusBtn").on({
 		placeholder.text("Checking...").css("color", "orange");
 
 		try {
-			const response = await $.ajax({
-				url: "/check-status",
-				method: "POST",
-				data: { phone },
-				dataType: "json",
-			});
+			const response = await axios.get(
+				`https://auxie-kwfy.onrender.com/getCandidateByPhone?phoneNumber=${encodeURIComponent(
+					phone
+				)}`
+			);
+			console.log(response.data);
 
 			placeholder
-				.text(`Status for ${phone}: ${response.status}`)
-				.css("color", response.status === "completed" ? "green" : "orange");
+				.text(
+					`Status for ${phone}: ${JSON.stringify(
+						response.data.candidate.registrationStatus
+					)}`
+				)
+				.css("color", "green");
 		} catch (err) {
-			console.error("AJAX error:", err);
-			placeholder.text("Failed to check status.").css("color", "red");
+			const axiosError = err as AxiosError<{ message?: string }>;
+			placeholder
+				.text(axiosError.response?.data?.message || "Failed to check status.")
+				.css("color", "red");
 		}
 	},
 });

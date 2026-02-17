@@ -13,7 +13,7 @@
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1.0" />
-		<title>frontend</title>
+		<title>Agent App</title>
 
 		<!-- bootstrap -->
 		<link
@@ -29,7 +29,7 @@
 			<div class="black darken-3 p-3 container">
 				<center>
 					<img
-						src="./public/logo.png"
+						src="/logo.png"
 						alt=""
 						style="object-fit: cover; width: 300px" />
 				</center>
@@ -61,7 +61,7 @@
 								<label
 									for="passpoert"
 									class="form-label mb-1"
-									>upload a passoport</label
+									>upload a passport</label
 								>
 								<input
 									type="file"
@@ -167,7 +167,7 @@
 					class="isAbsolute"
 					style="top: 20%; left: 20%; z-index: 5555; display: none">
 					<center
-						class="blue p-4 position-relative"
+						class="grey lighten-3p-4 position-relative"
 						style="height: 700px; width: 600px">
 						<!-- close button -->
 						<button
@@ -211,8 +211,15 @@
 							id="statusPlaceholder">
 							click the button to check
 						</div>
+						<!-- stored phone number goes here -->
+						<div
+							class="grey lighten-3"
+							id="storedPhones">
+							Recent registration: Dbl click and click check status
+						</div>
 					</center>
 				</div>
+				<!-- modal close -->
 			</div>
 		</div>
 
