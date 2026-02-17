@@ -8,20 +8,34 @@ let storedPassportHash: string = "";
 /* -------------------- LOCAL STORAGE HELPERS -------------------- */
 const PHONE_STORAGE_KEY = "enrolledPhones";
 
+/**
+ * Retrieve stored phones from localStorage
+ */
 function getStoredPhones(): string[] {
 	const raw = localStorage.getItem(PHONE_STORAGE_KEY);
+	console.log("📦 getStoredPhones:", raw);
 	return raw ? JSON.parse(raw) : [];
 }
 
+/**
+ * Store a phone in localStorage if not already present
+ */
 function storePhone(phone: string): void {
 	const phones = getStoredPhones();
+	console.log("📦 Before storing:", phones);
+
 	if (!phones.includes(phone)) {
 		phones.push(phone);
 		localStorage.setItem(PHONE_STORAGE_KEY, JSON.stringify(phones));
+		console.log("✅ Stored phone:", phone);
 	}
 }
 
+/**
+ * Clear all stored phones from localStorage
+ */
 function clearStoredPhones(): void {
+	console.log("🗑 clearStoredPhones called");
 	localStorage.removeItem(PHONE_STORAGE_KEY);
 }
 
@@ -31,6 +45,7 @@ function renderStoredPhones(): void {
 	container.empty();
 
 	const phones = getStoredPhones();
+	console.log("📱 Rendering phones:", phones);
 
 	container.append(
 		$("<div>").addClass("text-dark fw-bold mb-2").text("Recent registrations")
@@ -52,6 +67,7 @@ function renderStoredPhones(): void {
 			.text("Clear Recent")
 			.addClass("btn btn-sm red lighten-1 white-text w-100 mt-2")
 			.on("click", function () {
+				console.log("🗑 Clear button clicked");
 				clearStoredPhones();
 				container.empty();
 				container.text("recent registration");
@@ -61,12 +77,37 @@ function renderStoredPhones(): void {
 	}
 }
 
+/* -------------------- FORM VALIDATION -------------------- */
+/**
+ * Enables/disables submit button based on required fields
+ */
+function validateForm(): void {
+	const fullName = ($("#fullName").val() as string).trim();
+	const phoneNumber = ($("#phone").val() as string).trim();
+	const course = ($("#course").val() as string).trim();
+	const passportInput = $("#passport")[0] as HTMLInputElement;
+	const passportFile = passportInput.files?.[0];
+
+	const isValid =
+		fullName && phoneNumber && course && passportFile && storedPassportHash;
+
+	console.log("🧪 Form validity:", !!isValid);
+	$("button[type='submit']").prop("disabled", !isValid);
+}
+
 /* -------------------- PASSPORT PREVIEW + HASH -------------------- */
 $("#passport").on({
 	change: async function (e: Event) {
 		const input = e.target as HTMLInputElement;
 		const file = input.files?.[0];
-		if (!file) return;
+
+		console.log("📸 Selected file:", file);
+
+		if (!file) {
+			console.log("❌ No file selected");
+			validateForm();
+			return;
+		}
 
 		const arrayBuffer = await file.arrayBuffer();
 		const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
@@ -79,11 +120,16 @@ $("#passport").on({
 
 		storedPassportHash = storedPassportHash || newHash;
 
+		console.log("🔐 Generated hash:", newHash);
+		console.log("📌 storedPassportHash:", storedPassportHash);
+
 		const reader = new FileReader();
 		reader.onload = function () {
 			$("#img").attr("src", reader.result as string);
 		};
 		reader.readAsDataURL(file);
+
+		setTimeout(validateForm, 100); // Ensure form updates after hash is ready
 	},
 });
 
@@ -101,25 +147,39 @@ $("#form").on({
 		const fullName = ($("#fullName").val() as string).trim();
 		const phoneNumber = ($("#phone").val() as string).trim();
 		const course = ($("#course").val() as string).trim();
-
 		const passportInput = $("#passport")[0] as HTMLInputElement;
 		const passportFile = passportInput.files?.[0];
+
+		console.log("🚀 Form submit triggered");
+		console.log("fullName:", fullName);
+		console.log("phoneNumber:", phoneNumber);
+		console.log("course:", course);
+		console.log("passportFile exists:", !!passportFile);
+		console.log("storedPassportHash:", storedPassportHash);
+
+		if (!passportFile || !storedPassportHash) {
+			alert("Image and hash are required");
+			submitBtn.prop("disabled", false).html("Submit");
+			return;
+		}
 
 		const data = new FormData();
 		data.append("fullName", fullName);
 		data.append("phoneNumber", phoneNumber);
 		data.append("course", course);
+		data.append("imageFile", passportFile);
+		data.append("imageFileHash", storedPassportHash);
 
-		if (passportFile && storedPassportHash) {
-			data.append("imageFile", passportFile);
-			data.append("imageFileHash", storedPassportHash);
-		}
+		console.log("✅ imageFile appended");
+		console.log("✅ imageFileHash appended");
 
 		try {
 			const response = await axios.post(
 				`${backendUrls.regAgents}/enrolCandidate`,
 				data
 			);
+
+			console.log("✅ Backend response:", response.data);
 
 			storePhone(phoneNumber);
 			renderStoredPhones();
@@ -129,9 +189,12 @@ $("#form").on({
 			($("#form")[0] as HTMLFormElement).reset();
 			$("#img").attr("src", "");
 			storedPassportHash = "";
+			validateForm();
 		} catch (err) {
 			const axiosError = err as AxiosError<{ message?: string }>;
+			console.log("❌ Axios error:", axiosError.response?.data);
 			alert(axiosError.response?.data?.message || "Unknown error");
+			validateForm();
 		} finally {
 			submitBtn.prop("disabled", false).html("Submit");
 		}
@@ -146,6 +209,7 @@ $("#toggleModalBtn").on({
 		modal.css("display", isHidden ? "block" : "none");
 
 		if (isHidden) {
+			console.log("📂 Modal opened");
 			renderStoredPhones();
 		}
 	},
@@ -153,15 +217,18 @@ $("#toggleModalBtn").on({
 
 $("#closeModalBtn").on({
 	click: function () {
+		console.log("📂 Modal closed");
 		$("#statusModal").css("display", "none");
 	},
 });
 
-/* -------------------- CHECK STATUS BUTTON (AXIOS + QUERY STRING) -------------------- */
+/* -------------------- CHECK STATUS BUTTON -------------------- */
 $("#checkStatusBtn").on({
 	click: async function () {
 		const phone = ($("#candidatePhone").val() as string).trim();
 		const placeholder = $("#statusPlaceholder");
+
+		console.log("🔍 Checking status for:", phone);
 
 		if (!phone) {
 			placeholder.text("Please enter a phone number.").css("color", "red");
@@ -176,7 +243,8 @@ $("#checkStatusBtn").on({
 					backendUrls.regAgents
 				}/getCandidateByPhone?phoneNumber=${encodeURIComponent(phone)}`
 			);
-			console.log(response.data);
+
+			console.log("✅ Status response:", response.data);
 
 			placeholder
 				.text(
@@ -187,6 +255,7 @@ $("#checkStatusBtn").on({
 				.css("color", "green");
 		} catch (err) {
 			const axiosError = err as AxiosError<{ message?: string }>;
+			console.log("❌ Status error:", axiosError.response?.data);
 			placeholder
 				.text(axiosError.response?.data?.message || "Failed to check status.")
 				.css("color", "red");
@@ -194,10 +263,15 @@ $("#checkStatusBtn").on({
 	},
 });
 
+/* -------------------- CANDIDATE PHONE INPUT -------------------- */
 $("#candidatePhone").on({
 	input: function () {
 		$("#statusPlaceholder")
 			.text("click the button to check")
 			.css("color", "black");
+		validateForm();
 	},
 });
+
+/* -------------------- INITIAL DISABLE SUBMIT -------------------- */
+$("button[type='submit']").prop("disabled", true);
