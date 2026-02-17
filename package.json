@@ -5,7 +5,7 @@
 	"description": "",
 	"scripts": {
 		"install": "pnpm install",
-		"build": "pnpm -r --filter '!backend' build"
+		"build": "pnpm --filter auxie-shared run build && pnpm --filter regAgents-ui run build"
 	},
 	"keywords": [],
 	"author": "",
