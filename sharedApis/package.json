@@ -2,6 +2,9 @@
 	"name": "auxie-shared",
 	"version": "1.0.0",
 	"description": "shared url and configs used by cbt-extApp,cbt-agents-cbt-ui",
+	"scripts": {
+		"build": "echo 'sharedApis has nothing to build'"
+	},
 	"main": "index.ts",
 	"packageManager": "pnpm@10.29.3"
 }

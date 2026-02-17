@@ -1,9 +1,11 @@
 {
 	"name": "auxie-app",
 	"version": "1.0.0",
+	"private": "true",
 	"description": "",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"install": "pnpm install",
+		"build": "pnpm -r --filter '!backend' build"
 	},
 	"keywords": [],
 	"author": "",
