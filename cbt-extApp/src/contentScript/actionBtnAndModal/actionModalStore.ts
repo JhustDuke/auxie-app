@@ -1,5 +1,6 @@
 interface ModalInterface {
-	imageFile: Blob | null;
+	imageBuffer: Blob | null;
+	preparedDownloadImage: Blob | null;
 	phone: string | null;
 	isImageAvailable: boolean;
 	stepsForward: number;
@@ -9,7 +10,8 @@ interface ModalInterface {
 }
 
 const modalState: ModalInterface = {
-	imageFile: null,
+	imageBuffer: null,
+	preparedDownloadImage: null,
 	phone: null,
 	isImageAvailable: false,
 	stepsForward: 0,
@@ -22,62 +24,96 @@ export const actionModalStore = (function modalStore() {
 	const stateUpdateHistory: Record<string, string[]> = {};
 
 	function trackUpdate(prop: keyof ModalInterface, updatedBy: string) {
-		if (!stateUpdateHistory[prop]) stateUpdateHistory[prop] = [];
+		if (!stateUpdateHistory[prop]) {
+			stateUpdateHistory[prop] = [];
+		}
 		stateUpdateHistory[prop].push(updatedBy);
 	}
 
 	return {
-		setPhoneNumber(phone: string, updatedBy: string) {
+		setPhoneNumber(phone: string, updatedBy: string): void {
 			modalState.phone = phone;
 			trackUpdate("phone", updatedBy);
 		},
-		getPhoneNumber() {
+
+		getPhoneNumber(): string | null {
 			return modalState.phone;
 		},
-		setImageFile(imagefile: Blob, updatedBy: string) {
-			modalState.imageFile = imagefile;
-			trackUpdate("imageFile", updatedBy);
+
+		setImageBuffer(blob: Blob, updatedBy: string): void {
+			modalState.imageBuffer = blob;
+			trackUpdate("imageBuffer", updatedBy);
 		},
-		getImageFile() {
-			return modalState.imageFile;
+
+		getImageBuffer(): Blob | null {
+			return modalState.imageBuffer;
 		},
-		setCanGoBack(val: boolean, updatedBy: string) {
+
+		setPreparedDownloadImage(blob: Blob, updatedBy: string): void {
+			modalState.preparedDownloadImage = blob;
+			trackUpdate("preparedDownloadImage", updatedBy);
+		},
+
+		getPreparedDownloadImage(): Blob | null {
+			return modalState.preparedDownloadImage;
+		},
+
+		setImageAvailable(val: boolean, updatedBy: string): void {
+			modalState.isImageAvailable = val;
+			trackUpdate("isImageAvailable", updatedBy);
+		},
+
+		getImageAvailable(): boolean {
+			return modalState.isImageAvailable;
+		},
+
+		setCanGoBack(val: boolean, updatedBy: string): void {
 			modalState.canGoBack = val;
 			trackUpdate("canGoBack", updatedBy);
 		},
-		getCanGoBack() {
+
+		getCanGoBack(): boolean {
 			return modalState.canGoBack;
 		},
-		setCanGoForward(val: boolean, updatedBy: string) {
+
+		setCanGoForward(val: boolean, updatedBy: string): void {
 			modalState.canGoForward = val;
 			trackUpdate("canGoForward", updatedBy);
 		},
-		getCanGoForward() {
+
+		getCanGoForward(): boolean {
 			return modalState.canGoForward;
 		},
-		incrementStepsForward(updatedBy: string) {
+
+		incrementStepsForward(updatedBy: string): void {
 			modalState.stepsForward++;
 			trackUpdate("stepsForward", updatedBy);
 		},
-		incrementStepsBackward(updatedBy: string) {
+
+		incrementStepsBackward(updatedBy: string): void {
 			modalState.stepsBackward++;
 			trackUpdate("stepsBackward", updatedBy);
 		},
-		reduceStepsForward(updatedBy: string) {
+
+		reduceStepsForward(updatedBy: string): void {
 			modalState.stepsForward--;
 			trackUpdate("stepsForward", updatedBy);
 		},
-		reduceStepsBackward(updatedBy: string) {
+
+		reduceStepsBackward(updatedBy: string): void {
 			modalState.stepsBackward--;
 			trackUpdate("stepsBackward", updatedBy);
 		},
-		getStepsForward() {
+
+		getStepsForward(): number {
 			return modalState.stepsForward;
 		},
-		getStepsBackward() {
+
+		getStepsBackward(): number {
 			return modalState.stepsBackward;
 		},
-		getUpdateHistory(prop: keyof ModalInterface) {
+
+		getUpdateHistory(prop: keyof ModalInterface): string[] {
 			return stateUpdateHistory[prop] || [];
 		},
 	};

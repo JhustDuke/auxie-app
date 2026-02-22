@@ -56,7 +56,7 @@ export function wireModalEvents(
 	//Download button
 	downloadBtn.addEventListener("click", function () {
 		if (
-			!actionModalStore.getImageFile() ||
+			!actionModalStore.getPreparedDownloadImage() ||
 			!actionModalStore.getPhoneNumber()
 		) {
 			console.error("[downloadBtn] blocked: state incomplete");
@@ -65,7 +65,7 @@ export function wireModalEvents(
 		emitCustomEvent({
 			eventName: CustomEvents.initDownload,
 			payload: {
-				imageFile: actionModalStore.getImageFile(),
+				imageFile: actionModalStore.getPreparedDownloadImage(),
 				phone: actionModalStore.getPhoneNumber(),
 			},
 		});

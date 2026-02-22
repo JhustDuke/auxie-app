@@ -13,10 +13,11 @@
 	"license": "ISC",
 	"dependencies": {
 		"auxie-shared": "file:../sharedApis",
+		"axios": "^1.13.5",
 		"bootstrap": "^5.3.8",
 		"jquery": "^3.7.1",
 		"materializecss-colors-alone": "^0.1.0",
-		"xtension-messenger": "^2.1.6",
+		"xtension-messenger": "^2.1.9",
 		"zustand": "^4.5.7"
 	},
 	"devDependencies": {

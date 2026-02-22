@@ -54,8 +54,8 @@ export const formMethods = (function () {
 				return;
 			}
 
-			if (placeholder.includes("phone") && formData.phone) {
-				createPill(input, formData.phone, "Phone");
+			if (placeholder.includes("phone") && (formData.phoneNumber as any)) {
+				createPill(input, formData.phoneNumber, "Phone");
 				emitCustomEvent({
 					eventName: customEventsNames.onPhoneNumberEmit,
 					payload: { phone: formData.phone },

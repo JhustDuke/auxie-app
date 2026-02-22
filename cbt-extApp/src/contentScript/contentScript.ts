@@ -1,3 +1,14 @@
+/**
+ * whats my main goal today?
+ * get the image from the payload,
+ * send it to the upload modal via the store
+ * since its already a blob let it convert it to object url
+ * then it the download part ,
+ * then the image hashing check
+ * then store every new request in indexDb to prevent
+ * unneccesary network request
+ */
+
 // ======================================================
 // IMPORTS
 // External libs, types, utilities, and internal modules
@@ -70,9 +81,15 @@ const csApp = {
 				},
 			});
 
-			// Sync phone to modal store if present
+			// Sync phone and image to modal store if present
 			if (data.phone) {
 				actionModalStore.setPhoneNumber(data.phone, "onDataLoaded");
+			}
+			if (data.phoneNumber) {
+				actionModalStore.setPhoneNumber(data.phoneNumber, "onDataLoaded");
+			}
+			if (data.imageFile) {
+				actionModalStore.setImageBuffer(data.imageFile, "onDataLoaded");
 			}
 		},
 
