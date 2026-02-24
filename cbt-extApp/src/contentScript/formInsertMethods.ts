@@ -64,11 +64,12 @@ export const formMethods = (function () {
 		},
 
 		// Handle file inputs (image files)
+		//this is consumed by the onreceived custom event in cs script
 		handleFileInput: function (input: HTMLInputElement): void {
 			const imageFileName = extractFilename(input);
 			emitCustomEvent({
 				eventName: customEventsNames.onImageFileNameEmit,
-				payload: { imageFileName },
+				payload: { imageFileName, imageFile: input.files?.[0] },
 			});
 			console.log("image emitted");
 		},

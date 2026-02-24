@@ -4,6 +4,7 @@ export interface FormDataInterface {
 	phone?: string;
 	course?: string;
 	phoneNumber: string;
+	imageFileHash: string;
 	imageFile?: any;
 }
 export interface MessagePayloadInterface {
@@ -21,6 +22,7 @@ export interface CsState {
 	latestFormData: FormDataInterface | null;
 	phone: string | null;
 	fileName: string | null;
+	payloadHash: string | null;
 	shouldCheckImageMatch: boolean;
 	ui: Partial<UiState>;
 }

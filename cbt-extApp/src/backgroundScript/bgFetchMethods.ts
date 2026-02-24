@@ -1,7 +1,11 @@
 import { BackendResponseInterface } from "../interfaces";
 import { mockData } from "./mock";
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosResponse, AxiosInstance } from "axios";
 import { backendUrls } from "auxie-shared";
+
+const api: AxiosInstance = axios.create({
+	baseURL: backendUrls.extApp,
+});
 
 // BG fetch methods
 export const bgFetchMethods = {
@@ -13,8 +17,9 @@ export const bgFetchMethods = {
 	fetchBackendData: async function (): Promise<BackendResponseInterface[]> {
 		const getEnrolData = "/getEnrolData";
 		try {
-			const response: AxiosResponse<BackendResponseInterface[]> =
-				await axios.get(backendUrls.extApp + getEnrolData);
+			const response: AxiosResponse<BackendResponseInterface[]> = await api.get(
+				getEnrolData
+			);
 
 			const data: BackendResponseInterface[] = response.data;
 
@@ -22,7 +27,7 @@ export const bgFetchMethods = {
 
 			return data;
 		} catch (err: any) {
-			throw new Error(err.response.data?.message || "couldn't fetch resource");
+			throw new Error(err.response.data?.message || "network error retry");
 		}
 	},
 

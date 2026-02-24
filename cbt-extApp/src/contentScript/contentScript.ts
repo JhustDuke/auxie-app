@@ -1,12 +1,10 @@
 /**
  * whats my main goal today?
- * get the image from the payload,
- * send it to the upload modal via the store
- * since its already a blob let it convert it to object url
- * then it the download part ,
- * then the image hashing check
- * then store every new request in indexDb to prevent
- * unneccesary network request
+ * send and receive success or error message
+ * to do this i need two messages
+ * regSuccess
+ * regError
+ *
  */
 
 // ======================================================
@@ -32,6 +30,7 @@ import {
 } from "../utils";
 import { CustomEvents } from "./customEvents";
 import { actionModalStore } from "./actionBtnAndModal/actionModalStore";
+import { generateSHA256Hash } from "auxie-shared";
 
 // ======================================================
 // CONTENT SCRIPT APP
@@ -45,6 +44,7 @@ const csApp = {
 	state: {
 		latestFormData: null as FormDataInterface | null,
 		phone: null as string | null,
+		payloadHash: null as string | null,
 		fileName: null as string | null,
 
 		ui: {
@@ -65,11 +65,9 @@ const csApp = {
 			csApp.setState({ ui });
 		},
 
-		// Triggered when new enrol data is loaded
-		onDataLoaded(
-			data: FormDataInterface,
-			uiOverride?: Partial<CsState["ui"]>
-		): void {
+		// Triggered when any payload data is loaded from the bgscript
+		//latests formData contains all loaded payload from history or new data
+		onDataLoaded(data: FormDataInterface, uiOverride?: Partial<CsState["ui"]>) {
 			csApp.setState({
 				latestFormData: data,
 				ui: {
@@ -80,11 +78,11 @@ const csApp = {
 					...uiOverride,
 				},
 			});
+			if (data.imageFileHash) {
+				csApp.state.payloadHash = data.imageFileHash;
+			}
 
 			// Sync phone and image to modal store if present
-			if (data.phone) {
-				actionModalStore.setPhoneNumber(data.phone, "onDataLoaded");
-			}
 			if (data.phoneNumber) {
 				actionModalStore.setPhoneNumber(data.phoneNumber, "onDataLoaded");
 			}
@@ -157,7 +155,9 @@ const csApp = {
 				message.payload as GeneratorResultInterface<FormDataInterface>;
 			csApp.stateAction.handleGeneratorResult(result);
 		},
-
+		//sends message to the bgscript downloadHelper
+		//to download an image
+		//init by downloadbtn in actionModal
 		downloadImage(payload: { imageFile: string; phone: string }): void {
 			csApp.messaging.cs.messageBackgroundScript({
 				message: { type: messageType.startDownload, payload },
@@ -176,6 +176,11 @@ const csApp = {
 			});
 		},
 
+		//this receives the next data from the response list,
+		// the response list returns a an array
+		//and some method uses generators to send it one per time the opp is getPrevious
+		//consumed by the actionModal
+		//populates the data state
 		getNextData(): void {
 			csApp.messaging.cs.messageBackgroundScript({
 				message: { type: messageType.getNextEnrol },
@@ -220,6 +225,35 @@ const csApp = {
 			});
 		},
 
+		//it receives the image uploaded from the input file
+		//from formInsertMethods
+		//and the filename
+		//
+		async receiveImageFileName(imageFileName: string, imageFile: Blob) {
+			const payloadHash = csApp.state.payloadHash;
+			if (!imageFileName) return;
+
+			const localHash: string = await generateSHA256Hash(imageFile);
+
+			if (localHash !== payloadHash) {
+				console.log("i ran hash");
+				csApp.setState({
+					ui: {
+						customMessage: "this image is not valid",
+						shouldShowError: true,
+					},
+				});
+			} else {
+				csApp.setState({
+					fileName: imageFileName,
+					ui: {
+						customMessage: "received image file",
+						shouldShowError: false,
+					},
+				});
+			}
+		},
+
 		// Register background sync listener
 		init(): void {
 			csApp.messaging.cs.onMessageSync({
@@ -238,18 +272,6 @@ const csApp = {
 				csApp.setState({
 					phone,
 					ui: { customMessage: "received phone number" },
-				});
-			},
-
-			receiveImageFileName(imageFileName: string) {
-				if (!imageFileName) return;
-
-				csApp.setState({
-					fileName: imageFileName,
-					ui: {
-						customMessage: "received image file",
-						shouldShowError: false,
-					},
 				});
 			},
 		},
@@ -294,19 +316,28 @@ const csApp = {
 	// Binds form + custom event listeners
 	// ==================================================
 	initDOMEvents(): void {
+		//this auto populates the form field when the target elem
+		// is an input or select
 		csDom.form?.addEventListener("dblclick", (e) =>
 			csApp.stateAction.onFormInteraction(e)
 		);
 
+		//this works on inputs file it detects when its value has changed
 		csDom.form?.addEventListener("change", (e) =>
 			csApp.stateAction.onFormInteraction(e)
 		);
 
+		//this is ev is init from actionModal download btn
+		//this sends the imageBlob to bg to download it or die trying
 		document.addEventListener(CustomEvents.initDownload, (e: Event) => {
 			const ev = e as CustomEvent<{ imageFile: string; phone: string }>;
 			if (ev.detail) csApp.messaging.downloadImage(ev.detail);
 		});
 
+		//this events is init from actionModal
+		//the user can traverse forward or backward based on
+		//available data which could be served from history
+		//or refetched
 		document.addEventListener(CustomEvents.getNext, () =>
 			csApp.messaging.getNextData()
 		);
@@ -314,17 +345,25 @@ const csApp = {
 			csApp.messaging.getPrevData()
 		);
 
+		//this code is emitted from formInsertMethods,
+		//helps me in validating user data
+		//because the image is saved as phoneNumber.mimetype
+
 		document.addEventListener(CustomEvents.onPhoneNumberEmit, (e: Event) => {
 			const ev = e as CustomEvent<{ phone: string }>;
 			if (ev.detail)
 				csApp.messaging.emittedMessage.receivePhone(ev.detail.phone);
 		});
-
+		//the imageFileName is how it was stored in the backend
+		//e.g phoneNumber.png
+		//so with the listener i can check if it rhymes with the phoneNumber
+		//provided making it unique to that user gotten from formInsertMethods
 		document.addEventListener(CustomEvents.onImageFileNameEmit, (e: Event) => {
-			const ev = e as CustomEvent<{ imageFileName: string }>;
+			const ev = e as CustomEvent<{ imageFileName: string; imageFile: any }>;
 			if (ev.detail)
-				csApp.messaging.emittedMessage.receiveImageFileName(
-					ev.detail.imageFileName
+				csApp.messaging.receiveImageFileName(
+					ev.detail.imageFileName,
+					ev.detail.imageFile
 				);
 		});
 	},

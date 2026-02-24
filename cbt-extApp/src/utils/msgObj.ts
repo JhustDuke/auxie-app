@@ -8,4 +8,5 @@ export const messageType = {
 	recieveNextEnrol: " receive_next_enrol",
 	dataLoaded: "data_loaded",
 	startDownload: "download_data",
+	checkHash: "check_image_hash",
 };

@@ -13,6 +13,7 @@ export const bgMessaging = {
 		});
 	},
 	handleFetch: async function (message: ExtensionMessageInterface) {
+		console.log("MESSAGE HIT", message);
 		try {
 			let data;
 
