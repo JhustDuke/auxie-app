@@ -1,87 +1,63 @@
 import $ from "jquery";
 
-/* -------------------- GLOBAL HASH TRACKER -------------------- */
-let storedPassportHash: string = "";
+/* -------------------- CONSTANTS -------------------- */
 
-/* -------------------- PASSPORT PREVIEW + HASH + MATCH CHECK -------------------- */
-$("#passport").on({
-	change: async function (e: Event) {
-		const input = e.target as HTMLInputElement;
-		const file = input.files?.[0];
-		if (!file) return;
+/* -------------------- REGISTRATION TIMER -------------------- */
+let timer;
+let registrationStartTime: number = 0;
 
-		/* ---- HASH FILE ---- */
-		const arrayBuffer = await file.arrayBuffer();
-		const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
-		const hashArray = Array.from(new Uint8Array(hashBuffer));
-		const newHash = hashArray
-			.map(function (b) {
-				return b.toString(16).padStart(2, "0");
-			})
-			.join("");
+/**
+ * Starts or restarts the registration timer
+ */
+function startRegistrationTimer() {
+	timer = new Date();
+	registrationStartTime = timer.getTime();
+	registrationStartTime;
+}
 
-		/* ---- MATCH CHECK ---- */
-		if (storedPassportHash === "") {
-			storedPassportHash = newHash;
-			console.log("first hash stored:", storedPassportHash);
-		} else {
-			if (storedPassportHash === newHash) {
-				console.log("it's a match");
-			} else {
-				console.log("not a match");
-			}
-		}
+/* -------------------- INIT -------------------- */
+document.addEventListener("DOMContentLoaded", startRegistrationTimer);
 
-		/* ---- PREVIEW ---- */
-		const reader = new FileReader();
-		reader.onload = function () {
-			$("#img").attr("src", reader.result as string);
-		};
-		reader.readAsDataURL(file);
-	},
+/* -------------------- IMAGE PREVIEW -------------------- */
+const img = $("img")[0] as HTMLImageElement;
+
+$("input[type='file']").on("change", function () {
+	const file: File | undefined = (this as HTMLInputElement).files?.[0];
+	if (!file) return;
+
+	const reader = new FileReader();
+
+	reader.onload = function (e: ProgressEvent<FileReader>) {
+		img.src = e.target?.result as string;
+	};
+
+	reader.readAsDataURL(file);
 });
 
-/* -------------------- FORM SUBMIT + AJAX -------------------- */
-$("#form").on({
-	submit: async function (e: Event) {
-		e.preventDefault();
+/* -------------------- FORM HANDLER -------------------- */
+$("#form").on("submit", function (e: Event) {
+	e.preventDefault();
 
-		const submitBtn = $("button[type='submit']");
-		submitBtn.prop("disabled", true);
-		submitBtn.html(`
-            <span class="spinner-border spinner-border-sm" role="status"></span>
-            Processing...
-        `);
+	const fullName: string = ($("#fullName").val() as string).trim();
+	const email: string = ($("#email").val() as string).trim();
+	const phone: string = ($("#phone").val() as string).trim();
+	const course: string = $("#course").val() as string;
 
-		const data = new FormData();
-		data.append("fullName", ($("#fullName").val() as string).trim());
-		data.append("email", $("#email").val() as string);
-		data.append("phone", ($("#phone").val() as string).trim());
-		data.append("course", $("#course").val() as string);
+	if (!fullName || !email || !phone || !course) {
+		alert("Please fill in all required fields.");
+		return;
+	}
 
-		const passportInput = $("#passport")[0] as HTMLInputElement;
-		const passportFile = passportInput.files?.[0];
+	let timeTaken = (Date.now() - registrationStartTime) / 1000;
 
-		if (passportFile) {
-			// append file & stored hash (computed on change)
-			data.append("passport", passportFile);
-			data.append("passportHash", storedPassportHash);
-		}
+	if (timeTaken >= 60) {
+		const minutes = (Date.now() - registrationStartTime) / 60000;
+		timeTaken = Number(minutes.toFixed(3));
+		alert("This registration took:" + timeTaken + "minutes");
+		return;
+	}
 
-		try {
-			const response = await $.ajax({
-				url: "/enrol",
-				method: "POST",
-				data,
-				processData: false,
-				contentType: false,
-			});
+	alert("This registration took: " + timeTaken + "secs");
 
-			console.log("server response:", response);
-		} catch (err) {
-			console.error("AJAX error:", err);
-		}
-
-		submitBtn.prop("disabled", false).html("Submit");
-	},
+	($("#form")[0] as HTMLFormElement).reset();
 });
