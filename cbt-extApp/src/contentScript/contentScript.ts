@@ -1,18 +1,3 @@
-/**
- * whats my main goal today?
- * send and receive success or error message
- * to do this i need two messagesTypes in messageHandler
- * regSuccess
- * regError
- * regSuccess just gets the payload phoneNu mber
-	* does and updateStatus request
-	* 
-	* 
-	* 
-	* I NEED TO FIX THE QUERY STRING PART FOR UPDATEENROLsTATUS WHEN SOME REQUIRED QS IS MISSING
-
-	 */
-
 // ======================================================
 // IMPORTS
 // External libs, types, utilities, and internal modules
@@ -177,8 +162,7 @@ const csApp = {
 				successCb(response) {
 					csApp.stateAction.updateUI({
 						shouldShowError: false,
-						customMessage:
-							(response.message as string) || "image downloaded successfully",
+						customMessage: `image for ${payload.phone} downloaded successfully`,
 					});
 				},
 			});
@@ -244,9 +228,7 @@ const csApp = {
 				},
 				successCb(response) {
 					csApp.stateAction.updateUI({
-						customMessage:
-							(response.message as string) ||
-							`status for ${payload.phoneNumber} updated`,
+						customMessage: `status for ${payload.phoneNumber} updated`,
 						shouldShowError: false,
 					});
 				},

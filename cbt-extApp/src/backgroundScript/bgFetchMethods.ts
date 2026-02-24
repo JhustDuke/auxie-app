@@ -19,11 +19,7 @@ export const bgFetchMethods = {
 		const endpoint: string = "/updateEnrolStatus";
 
 		try {
-			const response = await api.patch(endpoint, null, {
-				params: {
-					...payload,
-				},
-			});
+			const response = await api.patch(endpoint, payload);
 
 			return response.data;
 		} catch (err: any) {
