@@ -2,7 +2,7 @@ import { BackendResponseInterface } from "../interfaces";
 import { mockData } from "./mock";
 import axios, { AxiosResponse, AxiosInstance } from "axios";
 import { backendUrls } from "auxie-shared";
-
+import { UpdateEnrolStatusPayloadInterface } from "../interfaces";
 const api: AxiosInstance = axios.create({
 	baseURL: backendUrls.extApp,
 });
@@ -12,6 +12,31 @@ export const bgFetchMethods = {
 	backHistory: [] as BackendResponseInterface[],
 	frontHistory: [] as BackendResponseInterface[],
 	dataGenerator: null as Generator<BackendResponseInterface> | null,
+
+	updateBackendData: async function (
+		payload: UpdateEnrolStatusPayloadInterface
+	): Promise<any> {
+		const endpoint: string = "/updateEnrolStatus";
+
+		try {
+			const response = await api.patch(endpoint, null, {
+				params: {
+					...payload,
+				},
+			});
+
+			return response.data;
+		} catch (err: any) {
+			const message: string =
+				err?.response?.data?.message ||
+				err?.message ||
+				"failed to update enrol status";
+
+			console.log("[updateBackendData] error:", message);
+
+			throw new Error(message);
+		}
+	},
 
 	// fetch backend data
 	fetchBackendData: async function (): Promise<BackendResponseInterface[]> {

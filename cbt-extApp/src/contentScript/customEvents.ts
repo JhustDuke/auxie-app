@@ -10,4 +10,5 @@ export const CustomEvents = {
 	disablePrevBtn: "disablePrev",
 	onPhoneNumberEmit: "receive_phoneNumber",
 	onImageFileNameEmit: "recieve_image_fileName",
+	onRegistrationStatusEmit: "update_registration_status",
 };

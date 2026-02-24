@@ -7,9 +7,12 @@ export interface FormDataInterface {
 	imageFileHash: string;
 	imageFile?: any;
 }
-export interface MessagePayloadInterface {
-	fetchSize: string;
+export interface UpdateEnrolStatusPayloadInterface {
+	phoneNumber: string;
+	registrationMessage: string;
+	registrationStatus: "error" | "completed";
 }
+
 export interface UiState {
 	isDataAvailable: boolean;
 	shouldShowActionBtn: boolean;

@@ -4,9 +4,9 @@ export const messageType = {
 	fetchSize: 5,
 	getNextEnrol: "get_next_enrol",
 	getPrevEnrol: "get_prev_enrol",
-	recievePrevEnrol: " receive_prev_enrol",
-	recieveNextEnrol: " receive_next_enrol",
+	recievePrevEnrol: "receive_prev_enrol",
+	recieveNextEnrol: "receive_next_enrol",
 	dataLoaded: "data_loaded",
 	startDownload: "download_data",
-	checkHash: "check_image_hash",
+	updateData: "update_data",
 };

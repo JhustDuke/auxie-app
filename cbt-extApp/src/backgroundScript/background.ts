@@ -3,6 +3,7 @@ import { bgFetchMethods } from "./bgFetchMethods";
 import { messageType as defaultMessageType, messageType } from "../utils";
 import { ExtensionMessageInterface } from "xtension-messenger/dist/types/interfaces";
 import { downloadImage } from "./downloadHelper";
+import { UpdateEnrolStatusPayloadInterface } from "../interfaces";
 
 const bg = oneTimeMsgFactory("bg");
 
@@ -36,6 +37,13 @@ export const bgMessaging = {
 				case messageType.startDownload: {
 					const payload = message.payload as any;
 					const result = await downloadImage(payload.imageFile, payload.phone);
+					return result;
+				}
+				case messageType.updateData: {
+					const payload = message.payload as UpdateEnrolStatusPayloadInterface;
+					const result = await bgFetchMethods.updateBackendData({
+						...payload,
+					});
 					return result;
 				}
 

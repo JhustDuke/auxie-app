@@ -1,11 +1,17 @@
 /**
  * whats my main goal today?
  * send and receive success or error message
- * to do this i need two messages
+ * to do this i need two messagesTypes in messageHandler
  * regSuccess
  * regError
- *
- */
+ * regSuccess just gets the payload phoneNu mber
+	* does and updateStatus request
+	* 
+	* 
+	* 
+	* I NEED TO FIX THE QUERY STRING PART FOR UPDATEENROLsTATUS WHEN SOME REQUIRED QS IS MISSING
+
+	 */
 
 // ======================================================
 // IMPORTS
@@ -17,6 +23,7 @@ import {
 	FormDataInterface,
 	GeneratorResultInterface,
 	CsState,
+	UpdateEnrolStatusPayloadInterface,
 } from "../interfaces";
 import { actionButtonMethods } from "./actionBtnAndModal/actionBtn";
 import { csDom } from "./csDOM";
@@ -170,7 +177,8 @@ const csApp = {
 				successCb(response) {
 					csApp.stateAction.updateUI({
 						shouldShowError: false,
-						customMessage: response.message as string,
+						customMessage:
+							(response.message as string) || "image downloaded successfully",
 					});
 				},
 			});
@@ -225,39 +233,23 @@ const csApp = {
 			});
 		},
 
-		//it receives the image uploaded from the input file
-		//from formInsertMethods
-		//and the filename
-		//
-		async receiveImageFileName(imageFileName: string, imageFile: Blob) {
-			const payloadHash = csApp.state.payloadHash;
-			if (!imageFileName) return;
-
-			const localHash: string = await generateSHA256Hash(imageFile);
-
-			if (localHash !== payloadHash) {
-				console.log("i ran hash");
-				csApp.setState({
-					ui: {
-						customMessage: "this image is not valid",
+		updateData(payload: UpdateEnrolStatusPayloadInterface) {
+			csApp.messaging.cs.messageBackgroundScript({
+				message: { type: messageType.updateData, payload },
+				errorCb(error) {
+					csApp.stateAction.updateUI({
+						customMessage: error.message as string,
 						shouldShowError: true,
-					},
-				});
-			} else {
-				csApp.setState({
-					fileName: imageFileName,
-					ui: {
-						customMessage: "received image file",
+					});
+				},
+				successCb(response) {
+					csApp.stateAction.updateUI({
+						customMessage:
+							(response.message as string) ||
+							`status for ${payload.phoneNumber} updated`,
 						shouldShowError: false,
-					},
-				});
-			}
-		},
-
-		// Register background sync listener
-		init(): void {
-			csApp.messaging.cs.onMessageSync({
-				onSyncCb: csApp.messaging.handleMessage,
+					});
+				},
 			});
 		},
 
@@ -274,6 +266,42 @@ const csApp = {
 					ui: { customMessage: "received phone number" },
 				});
 			},
+
+			//it receives the image uploaded from the input file
+			//from formInsertMethods
+			//and the filename
+			//
+			async receiveImageFileName(imageFileName: string, imageFile: Blob) {
+				const payloadHash = csApp.state.payloadHash;
+				if (!imageFileName) return;
+
+				const localHash: string = await generateSHA256Hash(imageFile);
+
+				if (localHash !== payloadHash) {
+					console.log("i ran hash");
+					csApp.setState({
+						ui: {
+							customMessage: "this image is not valid",
+							shouldShowError: true,
+						},
+					});
+				} else {
+					csApp.setState({
+						fileName: imageFileName,
+						ui: {
+							customMessage: "received image file",
+							shouldShowError: false,
+						},
+					});
+				}
+			},
+		},
+
+		// Register background sync listener
+		init(): void {
+			csApp.messaging.cs.onMessageSync({
+				onSyncCb: csApp.messaging.handleMessage,
+			});
 		},
 	},
 
@@ -354,6 +382,7 @@ const csApp = {
 			if (ev.detail)
 				csApp.messaging.emittedMessage.receivePhone(ev.detail.phone);
 		});
+
 		//the imageFileName is how it was stored in the backend
 		//e.g phoneNumber.png
 		//so with the listener i can check if it rhymes with the phoneNumber
@@ -361,11 +390,21 @@ const csApp = {
 		document.addEventListener(CustomEvents.onImageFileNameEmit, (e: Event) => {
 			const ev = e as CustomEvent<{ imageFileName: string; imageFile: any }>;
 			if (ev.detail)
-				csApp.messaging.receiveImageFileName(
+				csApp.messaging.emittedMessage.receiveImageFileName(
 					ev.detail.imageFileName,
 					ev.detail.imageFile
 				);
 		});
+
+		document.addEventListener(
+			CustomEvents.onRegistrationStatusEmit,
+			function (e: Event) {
+				const ev = e as CustomEvent<UpdateEnrolStatusPayloadInterface>;
+				if (ev.detail) {
+					csApp.messaging.updateData(ev.detail);
+				}
+			}
+		);
 	},
 
 	// ==================================================

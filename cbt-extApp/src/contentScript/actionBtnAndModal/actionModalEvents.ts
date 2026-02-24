@@ -1,3 +1,4 @@
+import { UpdateEnrolStatusPayloadInterface } from "../../interfaces";
 import { emitCustomEvent } from "../../utils";
 import { CustomEvents } from "../customEvents";
 import { actionModalStore } from "./actionModalStore";
@@ -30,10 +31,37 @@ export function wireModalEvents(
 	const prevBtn = elems.prevBtn as HTMLButtonElement;
 	const nextBtn = elems.nextBtn as HTMLButtonElement;
 
-	// Submit & Close
+	// Submit btn
 	submitBtn.addEventListener("click", function () {
+		const selectedValue = selectEl.value; // "error" | "success"
+
+		//backend expects completed or error so
+		//this changes the value to correspond to that
+		const registrationStatus =
+			selectedValue === "success" ? "completed" : "error";
+
+		const registrationMessage =
+			registrationStatus === "error"
+				? errorReasonInput.value.trim()
+				: "success";
+
+		//the phoneNumber is the active payload number set by the cs
+		//at dataLoaded
+		const phoneNumber = actionModalStore.getPhoneNumber();
+
+		//this is consume by the cs script
+		emitCustomEvent({
+			eventName: CustomEvents.onRegistrationStatusEmit,
+			payload: {
+				phoneNumber,
+				registrationStatus,
+				registrationMessage,
+			},
+		});
 		modal.style.display = "none";
 	});
+
+	//close btn
 	closeBtn.addEventListener("click", function () {
 		modal.style.display = "none";
 	});
