@@ -15,7 +15,7 @@ export async function startupDB() {
 	}
 }
 
-export async function dropTable(tableName = "enrolment_table", pool = appPool) {
+export async function dropTable(tableName = "enrolment_Table", pool = appPool) {
 	const conn = await pool.getConnection();
 
 	try {
