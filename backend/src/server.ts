@@ -10,7 +10,12 @@ dotenv.config({ quiet: true });
 const port: number = Number(process.env.PORT);
 // const host: string = process.env.HOST || "localhost";
 
-export const server: Server = Hapi.server({ port, compression: true });
+export const server: Server = Hapi.server({
+	port,
+	compression: {
+		minBytes: 1024,
+	},
+});
 
 // init for testing purposes only
 // export const initServer = async function (): Promise<void> {
