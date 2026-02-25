@@ -12,9 +12,9 @@ const port: number = Number(process.env.PORT);
 
 export const server: Server = Hapi.server({
 	port,
-	compression: {
-		minBytes: 1024,
-	},
+	// compression: {
+	// 	minBytes: 1024,
+	// },
 });
 
 // init for testing purposes only
