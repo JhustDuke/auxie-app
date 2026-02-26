@@ -1,3 +1,4 @@
+import "webextension-polyfill";
 import { oneTimeMsgFactory } from "xtension-messenger";
 import { bgFetchMethods } from "./bgFetchMethods";
 import { messageType as defaultMessageType, messageType } from "../utils";

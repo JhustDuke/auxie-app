@@ -3,6 +3,7 @@
 	"name": "auxie-cbt",
 	"version": "1.0",
 	"description": "A JAMB's portal CBTs' helper",
+
 	"permissions": [
 		"tabs",
 		"activeTab",
@@ -11,8 +12,10 @@
 		"downloads.open"
 	],
 
+	"host_permissions": ["https://backend-apis-cgn1.onrender.com/"],
+
 	"background": {
-		"scripts": ["dist/background.js"],
+		"scripts": ["dist/browser-polyfill.js", "dist/background.js"],
 		"service_worker": "dist/background.js",
 		"type": "module"
 	},
@@ -20,7 +23,7 @@
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
-			"js": ["dist/contentScript.js"]
+			"js": ["dist/browser-polyfill.js", "dist/contentScript.js"]
 		}
 	],
 
@@ -38,5 +41,10 @@
 		"16": "dist/icons/CBT-16.png",
 		"32": "dist/icons/CBT-32.png",
 		"64": "dist/icons/CBT-64.png"
+	},
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "auxie-cbt@dukelchike31"
+		}
 	}
 }
