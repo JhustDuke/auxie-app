@@ -17,8 +17,7 @@
 		"bootstrap": "^5.3.8",
 		"jquery": "^3.7.1",
 		"materializecss-colors-alone": "^0.1.0",
-		"xtension-messenger": "^2.1.9",
-		"zustand": "^4.5.7"
+		"xtension-messenger": "^2.1.9"
 	},
 	"devDependencies": {
 		"@types/firefox-webext-browser": "^143.0.0",
